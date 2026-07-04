@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>סידור המסעדה</title>
+<style>
+  :root{
+    --navy:#16305e; --navy-deep:#0e2148; --paper:#f2f4f8; --card:#ffffff;
+    --line:#d4dae6; --ink:#1c2333; --dim:#7a8296; --gold:#c9a24b;
+    --ok:#1e7a4f; --ok-bg:#e8f5ee; --warn:#b3402a; --warn-bg:#fdeeea; --amber-bg:#fdf6e3;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,"Segoe UI","Arial Hebrew",Arial,sans-serif; font-size:15px}
+  header{background:var(--navy); color:#fff; padding:calc(env(safe-area-inset-top) + 14px) 14px 0; position:sticky; top:0; z-index:20}
+  .brand{display:flex; justify-content:space-between; align-items:baseline}
+  .brand h1{margin:0; font-size:19px; letter-spacing:.2px}
+  #saveState{font-size:11px; color:#bcd0f5; min-height:14px}
+  nav{display:flex; gap:2px; overflow-x:auto; margin-top:10px; scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav button{border:0; background:transparent; color:#b9c6e2; padding:9px 12px; font-size:14px;
+    border-radius:10px 10px 0 0; white-space:nowrap; font-family:inherit}
+  nav button.on{background:var(--paper); color:var(--navy); font-weight:700}
+  main{padding:12px; max-width:640px; margin:0 auto; padding-bottom:90px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; margin-bottom:10px; overflow:hidden}
+  .card .hd{padding:8px 12px; background:#f7f8fb; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:14px}
+  .card .hd small{color:var(--dim); font-weight:400}
+  .pad{padding:12px}
+  .btn{display:block; width:100%; border:0; border-radius:12px; padding:11px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer}
+  .btn.navy{background:var(--navy); color:#fff}
+  .btn.line{background:#fff; border:1px solid var(--line); color:var(--navy)}
+  .btn.ok{background:var(--ok); color:#fff}
+  .btn.warn{background:var(--warn); color:#fff}
+  .btn.sm{padding:7px 10px; font-size:12px; width:auto; display:inline-block}
+  .row{display:flex; gap:8px}
+  .row .btn{flex:1}
+  .weeknav{display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid var(--line); border-radius:12px; padding:4px 6px; margin-bottom:10px}
+  .weeknav b{font-size:14px}
+  .weeknav button{border:0; background:transparent; font-size:22px; color:var(--navy); padding:2px 14px; font-family:inherit}
+  .shiftrow{width:100%; display:flex; gap:8px; padding:9px 12px; border-top:1px solid #eef0f5; background:#fff; border-left:0; border-right:0; border-bottom:0; text-align:right; font-family:inherit; font-size:14px; align-items:flex-start; cursor:pointer}
+  .chips{display:flex; flex-wrap:wrap; gap:5px; flex:1}
+  .chip{font-size:12px; padding:3px 9px; border-radius:99px; border:1px solid var(--navy); color:var(--navy); background:#eef2fb}
+  .chip.sb{border-style:dashed; color:var(--dim); border-color:#aab2c4; background:#f5f6f9}
+  .chip.vac{text-decoration:line-through; opacity:.55}
+  .chip small{color:var(--dim)}
+  .empty{color:#a7aebd; font-size:13px}
+  .notice{border-radius:12px; padding:11px 12px; font-size:13px; margin-bottom:10px; line-height:1.5}
+  .notice.amber{background:var(--amber-bg); border:1px solid #e5d9a8; color:#6b5618}
+  .notice.red{background:var(--warn-bg); border:1px solid #eec3b8; color:var(--warn)}
+  .notice.green{background:var(--ok-bg); border:1px solid #bfe0cf; color:var(--ok)}
+  .lst{padding:10px 12px; border-top:1px solid #eef0f5; display:flex; justify-content:space-between; align-items:center; gap:8px}
+  .lst:first-child{border-top:0}
+  .lst .nm{font-weight:700; font-size:14px}
+  .lst .meta{font-size:12px; color:var(--dim); margin-top:2px}
+  .role{display:inline-block; font-size:11px; border:1px solid var(--navy); color:var(--navy); border-radius:99px; padding:1px 8px; background:#eef2fb; margin-left:4px}
+  .acts{display:flex; gap:4px; font-size:12px; flex-shrink:0}
+  .acts button{border:0; background:transparent; font-family:inherit; font-size:12px; padding:5px 7px; border-radius:8px; cursor:pointer}
+  .a-edit{color:var(--navy); font-weight:700}
+  .a-del{color:var(--warn)}
+  .a-del.confirm{background:var(--warn); color:#fff; font-weight:700}
+  input,select,textarea{font-family:inherit; font-size:14px; border:1px solid var(--line); border-radius:10px; padding:9px 10px; width:100%; background:#fff; color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--navy); outline-offset:0}
+  label.fld{display:block; font-size:12px; color:var(--dim); margin-bottom:8px}
+  label.fld input,label.fld select{margin-top:4px}
+  .overlay{position:fixed; inset:0; background:rgba(10,16,32,.55); z-index:40; display:flex; align-items:flex-end}
+  .sheet{background:#fff; width:100%; border-radius:18px 18px 0 0; padding:16px 14px calc(env(safe-area-inset-bottom) + 16px); max-height:82vh; overflow-y:auto}
+  .sheet h3{margin:0 0 4px; font-size:16px}
+  .sheet .sub{font-size:12px; color:var(--dim); margin:0 0 12px}
+  .as-emp{border:1px solid var(--line); border-radius:12px; margin-bottom:7px; overflow:hidden}
+  .as-emp.on{border-color:var(--navy); background:#f4f7fd}
+  .as-head{width:100%; display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border:0; background:transparent; font-family:inherit; font-size:14px; cursor:pointer}
+  .as-opts{display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:0 12px 10px; border-top:1px solid #e2e8f4; padding-top:9px}
+  .tag{border:1px solid var(--line); background:#fff; color:var(--dim); border-radius:99px; padding:5px 11px; font-size:12px; font-family:inherit; cursor:pointer}
+  .tag.on{background:var(--navy); color:#fff; border-color:var(--navy); font-weight:700}
+  .avgrid{display:flex; align-items:center; gap:6px; margin-bottom:6px}
+  .avgrid .d{width:64px; flex-shrink:0; font-size:12px; font-weight:700}
+  .avgrid .d small{color:var(--dim); font-weight:400}
+  .avbtn{flex:1; border:1px solid var(--line); background:#f7f8fb; color:#a7aebd; border-radius:10px; padding:8px 4px; font-size:12px; font-family:inherit; cursor:pointer}
+  .avbtn.on{background:var(--navy); color:#fff; border-color:var(--navy); font-weight:700}
+  .needrow{display:flex; align-items:center; gap:6px; margin-bottom:6px}
+  .needrow .d{width:64px; flex-shrink:0; font-size:12px; font-weight:700}
+  .needrow input{width:52px; text-align:center; padding:6px 4px}
+  .needrow span{font-size:11px; color:var(--dim)}
+  table.rep{width:100%; border-collapse:collapse; font-size:13px}
+  table.rep th{background:#f7f8fb; color:var(--dim); font-size:12px; padding:8px 6px; font-weight:600}
+  table.rep td{padding:8px 6px; border-top:1px solid #eef0f5; text-align:center}
+  table.rep td:first-child{text-align:right; font-weight:700}
+  .cards3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px}
+  .kpi{background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 4px; text-align:center}
+  .kpi b{font-size:17px; display:block}
+  .kpi span{font-size:11px; color:var(--dim)}
+  .tiprow{display:flex; align-items:center; gap:8px; padding:7px 12px; border-top:1px solid #eef0f5}
+  .tiprow .d{width:64px; font-size:12px; font-weight:700; flex-shrink:0}
+  .tiprow .amt{position:relative; flex:1}
+  .tiprow .amt i{position:absolute; right:9px; top:8px; font-style:normal; color:var(--dim); font-size:13px}
+  .tiprow .amt input{padding-right:24px}
+  .tiprow .per{width:96px; font-size:11px; color:var(--dim); text-align:left; flex-shrink:0}
+  .st{font-size:11px; border-radius:99px; padding:2px 9px; font-weight:700}
+  .st.p{background:var(--amber-bg); color:#8a6d1a}
+  .st.a{background:var(--ok-bg); color:var(--ok)}
+  .st.r{background:var(--warn-bg); color:var(--warn)}
+  .foot{font-size:11px; color:#a0a7b8; padding:0 4px; line-height:1.5}
+  /* ---- טבלת השיתוף ---- */
+  .shareWrap{position:fixed; inset:0; background:rgba(10,16,32,.72); z-index:50; overflow-y:auto; padding:10px; display:flex; flex-direction:column}
+  .shareCard{background:#fff; border:2px solid var(--navy); border-radius:12px; padding:10px 8px 6px; margin:auto 0}
+  .shareCard h2{text-align:center; color:var(--navy); margin:2px 0 10px; font-size:24px; font-weight:800}
+  table.share{width:100%; border-collapse:collapse; table-layout:fixed}
+  table.share th{background:var(--navy); color:#fff; padding:9px 4px; font-size:15px}
+  table.share td{border-top:1px solid #c8d0e0; padding:8px 4px; text-align:center; vertical-align:middle}
+  table.share td.day{color:var(--navy); font-weight:800; font-size:16px; border-left:1px solid #c8d0e0; width:27%}
+  table.share td.day small{display:block; color:#98a0b3; font-weight:400; font-size:11px; margin-top:2px}
+  table.share td.names{border-left:1px solid #c8d0e0}
+  table.share tr:nth-child(even) td{background:#f7f8fb}
+  .shName{font-size:16px; font-weight:700; color:var(--navy); line-height:1.65; white-space:nowrap}
+  .shName i{font-style:normal; font-weight:400; color:#6b7285; font-size:14px; unicode-bidi:embed; direction:ltr}
+  .shSB{font-size:15px; font-weight:700; color:var(--navy); line-height:1.65}
+  .shSB i{font-style:normal; font-weight:600; color:#6b7285; font-size:12px}
+  .dash{color:#b8bfce; font-size:15px}
+  .shareBtns{display:flex; gap:8px; margin-top:10px}
+  .shareBtns .btn{padding:9px}
+  .hint{text-align:center; color:rgba(255,255,255,.75); font-size:11px; margin-top:8px}
+  textarea.bk{height:96px; font-size:10px; color:var(--dim); word-break:break-all}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><h1>סידור המסעדה</h1><span id="saveState"></span></div>
+  <nav id="tabs"></nav>
+</header>
+<main id="view"></main>
+<div id="overlay"></div>
+
+<script>
+"use strict";
+/* ================= נתונים ================= */
+var KEY = "restaurant-shift-app-v1";
+var ROLES = ["מלצר/ית","ברמן/ית","טבח/ית","אחמ\"ש","שוטף/ת כלים"];
+var TIP_ROLES = ["מלצר/ית","ברמן/ית"];
+var DAYS = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","מוצ״ש"];
+var TAG_ARRIVAL = {open:"19:00", close:"21:00"};
+var SHIFT_HOURS = 6;
+
+var S = {employees:[], schedule:{}, requests:[], tips:{}, availability:{}, needs:{}};
+var UI = {tab:"schedule", week:sundayOf(new Date()), assignKey:null, availEmp:"",
+          autoConfirm:false, autoResult:"", deleteEmp:null, empForm:null, reqForm:false,
+          share:false, storageOk:true, restoreMsg:"", copied:false};
+
+function load(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(raw){ var p = JSON.parse(raw); S = Object.assign({employees:[],schedule:{},requests:[],tips:{},availability:{},needs:{}}, p); }
+    localStorage.setItem("__t","1"); localStorage.removeItem("__t");
+  }catch(e){ UI.storageOk = false; }
+}
+function save(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify(S));
+    UI.storageOk = true;
+    flash("נשמר ✓");
+  }catch(e){ UI.storageOk = false; flash("שגיאה בשמירה"); }
+}
+var flashT = null;
+function flash(t){
+  var el = document.getElementById("saveState"); el.textContent = t;
+  clearTimeout(flashT); flashT = setTimeout(function(){ el.textContent=""; }, 1600);
+}
+
+/* ================= עזרים ================= */
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function fmt(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function sundayOf(d){ var c=new Date(d); c.setHours(0,0,0,0); c.setDate(c.getDate()-c.getDay()); return c; }
+function addDays(d,n){ var c=new Date(d); c.setDate(c.getDate()+n); return c; }
+function heDate(d){ return d.getDate()+"."+(d.getMonth()+1); }
+function weekDates(){ var a=[]; for(var i=0;i<7;i++) a.push(addDays(UI.week,i)); return a; }
+function weekKeys(){ return weekDates().map(fmt); }
+function norm(arr){ return (arr||[]).map(function(x){ return typeof x==="string" ? {empId:x,arrival:"",tag:""} : x; }); }
+function empById(id){ for(var i=0;i<S.employees.length;i++) if(S.employees[i].id===id) return S.employees[i]; return null; }
+function assignsOf(dk){
+  return norm(S.schedule[dk+"|evening"]).map(function(a){ a=Object.assign({},a); a.emp=empById(a.empId); return a; }).filter(function(a){return a.emp;});
+}
+function onVacation(empId, dk){
+  return S.requests.some(function(r){ return r.empId===empId && r.status==="approved" && r.from<=dk && r.to>=dk; });
+}
+function availOf(dk, empId){ var s=S.availability[dk+"|evening"]||{}; return s[empId]||""; }
+function empAvailCount(empId){ return weekKeys().filter(function(dk){ return availOf(dk,empId); }).length; }
+
+/* ================= פעולות ================= */
+var A = {
+  tab:function(t){ UI.tab=t; UI.autoConfirm=false; UI.deleteEmp=null; render(); },
+  week:function(n){ UI.week=addDays(UI.week,n*7); UI.autoConfirm=false; UI.autoResult=""; render(); },
+  openAssign:function(dk){ UI.assignKey=dk; render(); },
+  closeSheet:function(){ UI.assignKey=null; UI.empForm=null; UI.reqForm=false; render(); },
+  toggleAssign:function(dk, empId){
+    var k=dk+"|evening", cur=norm(S.schedule[k]);
+    var has=cur.some(function(a){return a.empId===empId;});
+    S.schedule[k]= has ? cur.filter(function(a){return a.empId!==empId;}) : cur.concat([{empId:empId,arrival:"",tag:""}]);
+    save(); render();
+  },
+  setArr:function(dk, empId, v){
+    var k=dk+"|evening";
+    S.schedule[k]=norm(S.schedule[k]).map(function(a){ if(a.empId===empId) a.arrival=v; return a; });
+    save(); render();
+  },
+  setTag:function(dk, empId, tag){
+    var k=dk+"|evening";
+    S.schedule[k]=norm(S.schedule[k]).map(function(a){
+      if(a.empId!==empId) return a;
+      var newTag = a.tag===tag ? "" : tag;
+      if(newTag && TAG_ARRIVAL[newTag] && (!a.arrival || a.arrival===TAG_ARRIVAL[a.tag])) a.arrival=TAG_ARRIVAL[newTag];
+      if(!newTag && a.arrival===TAG_ARRIVAL[a.tag]) a.arrival="";
+      a.tag=newTag; return a;
+    });
+    save(); render();
+  },
+  copyPrev:function(){
+    var wk=weekKeys();
+    for(var i=0;i<7;i++){
+      var src=norm(S.schedule[fmt(addDays(UI.week,i-7))+"|evening"]);
+      if(src.length) S.schedule[wk[i]+"|evening"]=src.map(function(a){return Object.assign({},a);});
+    }
+    save(); render();
+  },
+  share:function(v){ UI.share=v; UI.copied=false; render(); },
+  copyText:function(){
+    var t=exportText();
+    navigator.clipboard.writeText(t).then(function(){ UI.copied=true; render(); }, function(){});
+  },
+  /* עובדים */
+  empNew:function(){ UI.empForm={name:"",role:ROLES[0],wage:"",phone:""}; render(); },
+  empEdit:function(id){ UI.empForm=Object.assign({},empById(id)); render(); },
+  empField:function(f,v){ if(UI.empForm) UI.empForm[f]=v; },
+  empSave:function(){
+    var f=UI.empForm; if(!f || !f.name.trim()) return;
+    if(f.id){ S.employees=S.employees.map(function(e){return e.id===f.id?Object.assign({},f):e;}); }
+    else{ f.id="e"+Date.now(); S.employees.push(f); }
+    UI.empForm=null; save(); render();
+  },
+  empDelAsk:function(id){ UI.deleteEmp=id; render(); },
+  empDelNo:function(){ UI.deleteEmp=null; render(); },
+  empDelYes:function(id){
+    S.employees=S.employees.filter(function(e){return e.id!==id;});
+    Object.keys(S.schedule).forEach(function(k){ S.schedule[k]=norm(S.schedule[k]).filter(function(a){return a.empId!==id;}); });
+    UI.deleteEmp=null; save(); render();
+  },
+  /* בקשות */
+  reqNew:function(){ UI.reqForm=true; render(); },
+  reqSave:function(){
+    var e=document.getElementById("rq-emp"), t=document.getElementById("rq-type"),
+        f=document.getElementById("rq-from"), to=document.getElementById("rq-to"), n=document.getElementById("rq-note");
+    if(!e||!e.value||!f.value) return;
+    S.requests.push({id:"r"+Date.now(), empId:e.value, type:t.value, from:f.value, to:(to.value&&to.value>=f.value?to.value:f.value), note:n.value, status:"pending"});
+    UI.reqForm=false; save(); render();
+  },
+  reqSet:function(id,st){ S.requests=S.requests.map(function(r){ if(r.id===id) r.status=st; return r; }); save(); render(); },
+  /* טיפים ושעות בפועל */
+  setTip:function(dk,v){ S.tips[dk+"|evening"]=v; save(); render(); },
+  setHours:function(dk,empId,v){
+    var k=dk+"|evening";
+    S.schedule[k]=norm(S.schedule[k]).map(function(a){ if(a.empId===empId) a.hours=v; return a; });
+    save(); render();
+  },
+  /* שיבוץ חכם */
+  availPick:function(id){ UI.availEmp=id; render(); },
+  availCycle:function(dk){
+    if(!UI.availEmp) return;
+    var states=["","yes","open","close"], k=dk+"|evening";
+    var slot=S.availability[k]||(S.availability[k]={});
+    var cur=slot[UI.availEmp]||"", nxt=states[(states.indexOf(cur)+1)%4];
+    if(nxt) slot[UI.availEmp]=nxt; else delete slot[UI.availEmp];
+    save(); render();
+  },
+  setNeed:function(dk,f,v){
+    var k=dk+"|evening"; if(!S.needs[k]) S.needs[k]={};
+    S.needs[k][f]=v; save();
+  },
+  autoAsk:function(){ UI.autoResult=""; UI.autoConfirm=true; render(); },
+  autoNo:function(){ UI.autoConfirm=false; render(); },
+  autoRun:function(){
+    var wk=weekKeys(), availCount={}, assigned={}, placed=0, unfilled=0;
+    wk.forEach(function(dk){
+      var slot=S.availability[dk+"|evening"]||{};
+      Object.keys(slot).forEach(function(id){ if(slot[id]) availCount[id]=(availCount[id]||0)+1; });
+    });
+    wk.forEach(function(dk){
+      var k=dk+"|evening", need=S.needs[k]||{};
+      var nW=Number(need.workers||0), nSB=Number(need.sb||0);
+      if(!nW && !nSB) return;
+      var slot=S.availability[k]||{};
+      var cands=Object.keys(slot).filter(function(id){ return slot[id] && empById(id) && !onVacation(id,dk); })
+        .sort(function(a,b){
+          var ra=(assigned[a]||0)/(availCount[a]||1), rb=(assigned[b]||0)/(availCount[b]||1);
+          if(ra!==rb) return ra-rb;
+          return (availCount[b]||0)-(availCount[a]||0);
+        });
+      var picked=[];
+      cands.slice(0,nW).forEach(function(id){
+        var pref=slot[id], tag = pref==="open"?"open":pref==="close"?"close":"";
+        picked.push({empId:id, arrival:TAG_ARRIVAL[tag]||"", tag:tag});
+        assigned[id]=(assigned[id]||0)+1; placed++;
+      });
+      cands.slice(nW,nW+nSB).forEach(function(id){
+        picked.push({empId:id, arrival:"", tag:"sb"});
+        assigned[id]=(assigned[id]||0)+0.4; placed++;
+      });
+      unfilled+=Math.max(0,nW+nSB-picked.length);
+      S.schedule[k]=picked;
+    });
+    UI.autoConfirm=false;
+    UI.autoResult="השיבוץ הושלם! שובצו "+placed+" משבצות."+(unfilled?" ⚠️ "+unfilled+" משבצות נותרו ללא איוש (אין מספיק זמינות).":"");
+    save(); render();
+  },
+  /* גיבוי */
+  backup:function(){
+    var j=JSON.stringify(S);
+    document.getElementById("bk-out").value=j;
+    navigator.clipboard.writeText(j).then(function(){ UI.restoreMsg="copied"; render(); }, function(){ render(); });
+  },
+  restore:function(){
+    try{
+      var p=JSON.parse(document.getElementById("bk-in").value.trim());
+      if(!p || typeof p!=="object" || !Array.isArray(p.employees)){ UI.restoreMsg="bad"; render(); return; }
+      S=Object.assign({employees:[],schedule:{},requests:[],tips:{},availability:{},needs:{}}, p);
+      UI.restoreMsg="done"; save(); render();
+    }catch(e){ UI.restoreMsg="bad"; render(); }
+  }
+};
+
+/* ================= חישובים ================= */
+function hrsOf(a){ var n=Number(a.hours); return n>0?n:SHIFT_HOURS; }
+function weeklyHours(empId){
+  return weekKeys().reduce(function(h,dk){
+    var m=0;
+    assignsOf(dk).forEach(function(a){ if(a.empId===empId && a.tag!=="sb") m=hrsOf(a); });
+    return h+m;
+  },0);
+}
+/* חלוקת טיפים ליום: לפי שעות בפועל, בניכוי שכר הבסיס.
+   טיפ לשעה = סך הטיפים ÷ סך שעות הזכאים. לכל עובד: (טיפ לשעה − שכר בסיס) × שעות. */
+function dayTipCalc(dk){
+  var T=Number(S.tips[dk+"|evening"]||0);
+  var rows=assignsOf(dk).filter(function(a){return TIP_ROLES.indexOf(a.emp.role)>=0 && a.tag!=="sb";})
+    .map(function(a){ return {a:a, hrs:hrsOf(a), entered:Number(a.hours)>0}; });
+  var totH=rows.reduce(function(s,r){return s+r.hrs;},0);
+  var rate= totH>0 ? T/totH : 0;
+  rows.forEach(function(r){
+    r.gross=rate*r.hrs;
+    r.base=Number(r.a.emp.wage||0)*r.hrs;
+    r.pay=Math.max(0, r.gross-r.base);
+    r.short=T>0 && r.gross<r.base;
+  });
+  return {T:T, rows:rows, totH:totH, rate:rate};
+}
+function weeklyTips(empId){
+  var sum=0;
+  weekKeys().forEach(function(dk){
+    if(!Number(S.tips[dk+"|evening"]||0)) return;
+    dayTipCalc(dk).rows.forEach(function(r){ if(r.a.empId===empId) sum+=r.pay; });
+  });
+  return sum;
+}
+function exportText(){
+  var wd=weekDates(), out="📋 *סידור עבודה "+heDate(wd[0])+"–"+heDate(wd[6])+"*\n";
+  wd.forEach(function(d,i){
+    var as=assignsOf(fmt(d)); if(!as.length) return;
+    out+="\n📅 *יום "+DAYS[i]+" "+heDate(d)+"*\n";
+    as.forEach(function(a){
+      var p=[];
+      if(a.tag==="open")p.push("פתיחה"); if(a.tag==="close")p.push("סגירה"); if(a.tag==="sb")p.push("SB");
+      if(a.arrival)p.push("הגעה "+a.arrival);
+      out+="  • "+a.emp.name+(p.length?" — "+p.join(", "):"")+"\n";
+    });
+  });
+  return out;
+}
+
+/* ================= תצוגה ================= */
+function render(){
+  var pend=S.requests.filter(function(r){return r.status==="pending";}).length;
+  var tabs=[["schedule","סידור"],["auto","שיבוץ חכם"],["employees","עובדים"],
+            ["requests","בקשות"+(pend?" ("+pend+")":"")],["tips","טיפים"],["reports","דוחות"],["backup","גיבוי"]];
+  document.getElementById("tabs").innerHTML = tabs.map(function(t){
+    return '<button class="'+(UI.tab===t[0]?"on":"")+'" onclick="A.tab(\''+t[0]+'\')">'+t[1]+"</button>";
+  }).join("");
+
+  var h="";
+  if(!UI.storageOk) h+='<div class="notice red">⚠️ השמירה המקומית חסומה בדפדפן הזה. ודאו שאתם לא בגלישה פרטית (מצב אינקוגניטו), ופתחו את הקובץ מספארי רגיל.</div>';
+
+  if(["schedule","auto","tips","reports"].indexOf(UI.tab)>=0){
+    var wd=weekDates();
+    h+='<div class="weeknav"><button onclick="A.week(-1)">‹</button><b>שבוע '+heDate(wd[0])+' – '+heDate(wd[6])+'</b><button onclick="A.week(1)">›</button></div>';
+  }
+  if(UI.tab==="schedule") h+=vSchedule();
+  if(UI.tab==="auto") h+=vAuto();
+  if(UI.tab==="employees") h+=vEmployees();
+  if(UI.tab==="requests") h+=vRequests();
+  if(UI.tab==="tips") h+=vTips();
+  if(UI.tab==="reports") h+=vReports();
+  if(UI.tab==="backup") h+=vBackup();
+  document.getElementById("view").innerHTML=h;
+
+  var ov="";
+  if(UI.assignKey) ov=mAssign();
+  else if(UI.empForm) ov=mEmp();
+  else if(UI.reqForm) ov=mReq();
+  else if(UI.share) ov=mShare();
+  document.getElementById("overlay").innerHTML=ov;
+}
+
+function vSchedule(){
+  var h="";
+  if(!S.employees.length) h+='<div class="notice amber">עדיין אין עובדים. עברו ללשונית "עובדים" והוסיפו את הצוות כדי להתחיל לשבץ.</div>';
+  h+='<div class="row" style="margin-bottom:10px"><button class="btn line" onclick="A.copyPrev()">העתקה משבוע קודם</button><button class="btn navy" onclick="A.share(true)">📸 טבלה לשיתוף</button></div>';
+  weekDates().forEach(function(d,i){
+    var dk=fmt(d), as=assignsOf(dk);
+    h+='<div class="card"><div class="hd"><span>יום '+DAYS[i]+'</span><small>'+heDate(d)+'</small></div>';
+    h+='<button class="shiftrow" onclick="A.openAssign(\''+dk+'\')"><div class="chips">';
+    if(!as.length) h+='<span class="empty">לא שובץ — הקישו לשיבוץ</span>';
+    as.forEach(function(a){
+      var cls="chip"+(a.tag==="sb"?" sb":"")+(onVacation(a.empId,dk)?" vac":"");
+      var extra=a.tag==="open"?" (פתיחה)":a.tag==="close"?" (סגירה)":a.tag==="sb"?" (SB)":"";
+      h+='<span class="'+cls+'">'+esc(a.emp.name)+extra+(a.arrival?' <small>· '+a.arrival+'</small>':"")+'</span>';
+    });
+    h+='</div></button></div>';
+  });
+  return h;
+}
+
+function mAssign(){
+  var dk=UI.assignKey, idx=weekKeys().indexOf(dk);
+  var h='<div class="overlay" onclick="A.closeSheet()"><div class="sheet" onclick="event.stopPropagation()">';
+  h+='<h3>שיבוץ · יום '+DAYS[idx]+'</h3><p class="sub">הקישו על עובד/ת לשיבוץ. פתיחה קובעת הגעה 19:00, סגירה 21:00 — ואפשר לכוונן ידנית.</p>';
+  if(!S.employees.length) h+='<p class="sub">אין עובדים — הוסיפו בלשונית "עובדים".</p>';
+  var cur=norm(S.schedule[dk+"|evening"]);
+  S.employees.forEach(function(e){
+    var a=null; cur.forEach(function(x){ if(x.empId===e.id) a=x; });
+    var vac=onVacation(e.id,dk);
+    h+='<div class="as-emp'+(a?" on":"")+'">';
+    h+='<button class="as-head" onclick="A.toggleAssign(\''+dk+'\',\''+e.id+'\')"><span><b>'+esc(e.name)+'</b> <small style="color:var(--dim)">· '+esc(e.role)+'</small>'+(vac?' <small style="color:var(--warn)">· בחופשה מאושרת!</small>':"")+'</span><span style="color:'+(a?"var(--navy)":"#c4cad8")+';font-weight:700">'+(a?"✓ משובץ":"+")+'</span></button>';
+    if(a){
+      h+='<div class="as-opts"><label style="font-size:11px;color:var(--dim)">הגעה: <input type="time" style="width:auto;padding:4px 6px;font-size:12px" value="'+esc(a.arrival)+'" onchange="A.setArr(\''+dk+'\',\''+e.id+'\',this.value)"></label>';
+      [["open","פתיחה"],["close","סגירה"],["sb","SB"]].forEach(function(t){
+        h+='<button class="tag'+(a.tag===t[0]?" on":"")+'" onclick="A.setTag(\''+dk+'\',\''+e.id+'\',\''+t[0]+'\')">'+t[1]+'</button>';
+      });
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  h+='<button class="btn navy" style="margin-top:10px" onclick="A.closeSheet()">סיום</button></div></div>';
+  return h;
+}
+
+function vAuto(){
+  var h='<div class="card"><div class="hd"><span>1 · אילוצי העובדים לשבוע</span></div><div class="pad">';
+  h+='<p class="sub" style="margin-top:0">בחרו עובד/ת והקישו על הערבים שנתנו. הקשה נוספת: ✓ זמין/ה → פתיחה (19:00) → סגירה (21:00) → ביטול.</p>';
+  h+='<select onchange="A.availPick(this.value)" style="margin-bottom:10px"><option value="">בחרו עובד/ת…</option>';
+  S.employees.forEach(function(e){
+    h+='<option value="'+e.id+'"'+(UI.availEmp===e.id?" selected":"")+'>'+esc(e.name)+' ('+empAvailCount(e.id)+' ערבים ניתנו)</option>';
+  });
+  h+='</select>';
+  if(UI.availEmp){
+    weekDates().forEach(function(d,i){
+      var dk=fmt(d), v=availOf(dk,UI.availEmp);
+      var lbl = v==="yes"?"ערב ✓":v==="open"?"ערב · פתיחה":v==="close"?"ערב · סגירה":"ערב";
+      h+='<div class="avgrid"><span class="d">'+DAYS[i]+' <small>'+heDate(d)+'</small></span><button class="avbtn'+(v?" on":"")+'" onclick="A.availCycle(\''+dk+'\')">'+lbl+'</button></div>';
+    });
+  }
+  var sums=S.employees.filter(function(e){return empAvailCount(e.id);}).map(function(e){return esc(e.name)+": "+empAvailCount(e.id);});
+  if(sums.length) h+='<p class="sub" style="margin:8px 0 0">'+sums.join(" · ")+'</p>';
+  h+='</div></div>';
+
+  h+='<div class="card"><div class="hd"><span>2 · כמה צריך בכל ערב</span></div><div class="pad">';
+  h+='<p class="sub" style="margin-top:0">מספר עובדים + SB. ערב עם 0 בשניהם לא ישובץ אוטומטית.</p>';
+  weekDates().forEach(function(d,i){
+    var k=fmt(d)+"|evening", n=S.needs[k]||{};
+    h+='<div class="needrow"><span class="d">'+DAYS[i]+'</span>'+
+       '<input type="number" min="0" inputmode="numeric" placeholder="0" value="'+esc(n.workers||"")+'" onchange="A.setNeed(\''+fmt(d)+'\',\'workers\',this.value)"><span>עובדים</span>'+
+       '<input type="number" min="0" inputmode="numeric" placeholder="0" value="'+esc(n.sb||"")+'" onchange="A.setNeed(\''+fmt(d)+'\',\'sb\',this.value)"><span>SB</span></div>';
+  });
+  h+='</div></div>';
+
+  h+='<div class="card"><div class="hd"><span>3 · שיבוץ אוטומטי</span></div><div class="pad">';
+  h+='<p class="sub" style="margin-top:0">כלל האצבע: מי שנותן יותר ערבים — מקבל יותר בפועל. בסוף עוברים על התוצאה בלשונית "סידור" ומתקנים.</p>';
+  if(!UI.autoConfirm){
+    h+='<button class="btn navy" onclick="A.autoAsk()">⚡ בצע שיבוץ אוטומטי</button>';
+  }else{
+    h+='<div class="notice amber">שיבוצים קיימים בערבים שהוגדר להם צורך יוחלפו. להמשיך?</div>';
+    h+='<div class="row"><button class="btn navy" onclick="A.autoRun()">כן, בצע שיבוץ</button><button class="btn line" onclick="A.autoNo()">ביטול</button></div>';
+  }
+  if(UI.autoResult){
+    h+='<div class="notice green" style="margin-top:10px">'+esc(UI.autoResult)+'</div>';
+    h+='<button class="btn line" onclick="A.tab(\'schedule\')">לצפייה בסידור ולביצוע התאמות ←</button>';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+function vEmployees(){
+  var h='<button class="btn navy" style="margin-bottom:10px" onclick="A.empNew()">+ הוספת עובד/ת</button>';
+  if(!S.employees.length) return h+'<p class="sub" style="text-align:center;color:var(--dim)">אין עובדים עדיין. הוסיפו את הראשון כדי להתחיל.</p>';
+  h+='<div class="card">';
+  S.employees.forEach(function(e){
+    h+='<div class="lst"><div><div class="nm">'+esc(e.name)+'</div><div class="meta"><span class="role">'+esc(e.role)+'</span> ₪'+esc(e.wage)+'/שעה'+(e.phone?' · '+esc(e.phone):"")+'</div></div>';
+    h+='<div class="acts"><button class="a-edit" onclick="A.empEdit(\''+e.id+'\')">עריכה</button>';
+    if(UI.deleteEmp===e.id){
+      h+='<button class="a-del confirm" onclick="A.empDelYes(\''+e.id+'\')">אישור מחיקה</button><button onclick="A.empDelNo()" style="color:var(--dim)">ביטול</button>';
+    }else{
+      h+='<button class="a-del" onclick="A.empDelAsk(\''+e.id+'\')">מחיקה</button>';
+    }
+    h+='</div></div>';
+  });
+  return h+'</div>';
+}
+
+function mEmp(){
+  var f=UI.empForm;
+  var h='<div class="overlay" onclick="A.closeSheet()"><div class="sheet" onclick="event.stopPropagation()">';
+  h+='<h3>'+(f.id?"עריכת עובד/ת":"עובד/ת חדש/ה")+'</h3><div style="height:8px"></div>';
+  h+='<label class="fld">שם מלא<input value="'+esc(f.name)+'" oninput="A.empField(\'name\',this.value)"></label>';
+  h+='<label class="fld">תפקיד<select onchange="A.empField(\'role\',this.value)">'+ROLES.map(function(r){return '<option'+(f.role===r?" selected":"")+'>'+r+'</option>';}).join("")+'</select></label>';
+  h+='<label class="fld">שכר שעתי (₪)<input type="number" inputmode="decimal" value="'+esc(f.wage)+'" oninput="A.empField(\'wage\',this.value)"></label>';
+  h+='<label class="fld">טלפון (לא חובה)<input value="'+esc(f.phone||"")+'" oninput="A.empField(\'phone\',this.value)"></label>';
+  h+='<button class="btn navy" onclick="A.empSave()">שמירה</button></div></div>';
+  return h;
+}
+
+function vRequests(){
+  var h='<button class="btn navy" style="margin-bottom:10px" onclick="A.reqNew()">+ בקשה חדשה (חופשה / אילוץ)</button>';
+  if(!S.requests.length) return h+'<p class="sub" style="text-align:center;color:var(--dim)">אין בקשות פתוחות.</p>';
+  var sorted=S.requests.slice().sort(function(a,b){return (a.status==="pending"?-1:1)-(b.status==="pending"?-1:1);});
+  sorted.forEach(function(r){
+    var e=empById(r.empId);
+    var st=r.status==="approved"?'<span class="st a">אושרה</span>':r.status==="rejected"?'<span class="st r">נדחתה</span>':'<span class="st p">ממתינה</span>';
+    h+='<div class="card"><div class="pad" style="padding:11px 12px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><b style="font-size:14px">'+esc(e?e.name:"עובד/ת")+' · '+esc(r.type)+'</b><div class="meta" style="font-size:12px;color:var(--dim);margin-top:2px">'+esc(r.from)+(r.to!==r.from?' עד '+esc(r.to):"")+'</div>'+(r.note?'<div style="font-size:12px;margin-top:4px">"'+esc(r.note)+'"</div>':"")+'</div>'+st+'</div>';
+    if(r.status==="pending"){
+      h+='<div class="row" style="margin-top:9px"><button class="btn ok" style="padding:8px;font-size:12px" onclick="A.reqSet(\''+r.id+'\',\'approved\')">אישור</button><button class="btn line" style="padding:8px;font-size:12px" onclick="A.reqSet(\''+r.id+'\',\'rejected\')">דחייה</button></div>';
+    }
+    h+='</div></div>';
+  });
+  return h;
+}
+
+function mReq(){
+  var today=fmt(new Date());
+  var h='<div class="overlay" onclick="A.closeSheet()"><div class="sheet" onclick="event.stopPropagation()"><h3>בקשה חדשה</h3><div style="height:8px"></div>';
+  if(!S.employees.length){ h+='<p class="sub">קודם הוסיפו עובדים בלשונית "עובדים".</p></div></div>'; return h; }
+  h+='<label class="fld">עובד/ת<select id="rq-emp">'+S.employees.map(function(e){return '<option value="'+e.id+'">'+esc(e.name)+'</option>';}).join("")+'</select></label>';
+  h+='<label class="fld">סוג<select id="rq-type"><option>חופשה</option><option>אילוץ (לא זמין/ה)</option></select></label>';
+  h+='<div class="row"><label class="fld" style="flex:1">מתאריך<input type="date" id="rq-from" value="'+today+'"></label><label class="fld" style="flex:1">עד תאריך<input type="date" id="rq-to" value="'+today+'"></label></div>';
+  h+='<label class="fld">הערה (לא חובה)<input id="rq-note"></label>';
+  h+='<button class="btn navy" onclick="A.reqSave()">שליחת בקשה</button></div></div>';
+  return h;
+}
+
+function vTips(){
+  var h='<div class="notice" style="background:#fff;border:1px solid var(--line);color:var(--dim)">בסוף הערב הזינו את סך הטיפים ואת השעות שכל אחד עבד בפועל. הטיפ מחולק לפי שעות, ומכל עובד מנוכה שכר הבסיס שלו (בסיס × שעות). המוצג הוא הסכום לתשלום מהטיפים.</div>';
+  weekDates().forEach(function(d,i){
+    var dk=fmt(d), c=dayTipCalc(dk);
+    if(!c.rows.length && !c.T) {
+      // יום בלי שיבוץ ובלי טיפים — שורה מצומצמת
+      h+='<div class="card"><div class="hd"><span>יום '+DAYS[i]+' <small>'+heDate(d)+'</small></span><small>אין זכאים</small></div></div>';
+      return;
+    }
+    h+='<div class="card"><div class="hd"><span>יום '+DAYS[i]+' <small>'+heDate(d)+'</small></span>'+
+       (c.T&&c.totH?'<small>טיפ לשעה: <b style="color:var(--navy)">₪'+c.rate.toFixed(1)+'</b></small>':"")+'</div>';
+    h+='<div class="tiprow"><span class="d">סך טיפים</span><span class="amt"><i>₪</i><input type="number" inputmode="decimal" min="0" placeholder="0" value="'+esc(S.tips[dk+"|evening"]||"")+'" onchange="A.setTip(\''+dk+'\',this.value)"></span><span class="per"></span></div>';
+    c.rows.forEach(function(r){
+      h+='<div class="tiprow"><span class="d">'+esc(r.a.emp.name)+'</span>'+
+         '<span style="display:flex;align-items:center;gap:4px;flex:1"><input type="number" step="0.5" min="0" inputmode="decimal" placeholder="'+SHIFT_HOURS+'" value="'+esc(r.a.hours||"")+'" onchange="A.setHours(\''+dk+'\',\''+r.a.empId+'\',this.value)" style="width:64px;text-align:center"><span style="font-size:11px;color:var(--dim)">שעות'+(r.entered?"":" (הערכה)")+'</span></span>'+
+         '<span class="per">'+(c.T?('<b style="color:var(--ok);font-size:13px">₪'+r.pay.toFixed(0)+'</b>'+(r.short?'<br><span style="color:var(--warn);font-size:10px">מתחת לבסיס ⚠️</span>':'<br><span style="font-size:10px">ברוטו ₪'+r.gross.toFixed(0)+' − בסיס ₪'+r.base.toFixed(0)+'</span>')):"—")+'</span></div>';
+    });
+    h+='</div>';
+  });
+  return h;
+}
+
+function vReports(){
+  var rows=S.employees.map(function(e){
+    return {e:e, h:weeklyHours(e.id), tips:weeklyTips(e.id)};
+  }).filter(function(r){return r.h>0||r.tips>0;});
+  var totH=0,totC=0,totT=0;
+  rows.forEach(function(r){ r.cost=r.h*Number(r.e.wage||0); totH+=r.h; totC+=r.cost; totT+=r.tips; });
+  var h='<div class="cards3"><div class="kpi"><b>'+totH+'</b><span>שעות עבודה</span></div><div class="kpi"><b>₪'+totC.toLocaleString()+'</b><span>עלות שכר</span></div><div class="kpi"><b>₪'+totT.toFixed(0)+'</b><span>טיפים חולקו</span></div></div>';
+  h+='<div class="card"><table class="rep"><tr><th style="text-align:right">עובד/ת</th><th>שעות</th><th>עלות שכר</th><th>טיפים</th></tr>';
+  if(!rows.length) h+='<tr><td colspan="4" style="color:var(--dim);text-align:center">אין שיבוצים בשבוע הזה עדיין.</td></tr>';
+  rows.forEach(function(r){
+    h+='<tr><td>'+esc(r.e.name)+'</td><td>'+r.h+'</td><td>₪'+r.cost.toLocaleString()+'</td><td>'+(r.tips?'₪'+r.tips.toFixed(0):"—")+'</td></tr>';
+  });
+  h+='</table></div><p class="foot">השעות לפי מה שהוזן בלשונית "טיפים"; אם לא הוזן — הערכה של '+SHIFT_HOURS+' שעות. עמודת הטיפים היא הסכום לתשלום אחרי ניכוי הבסיס. משמרות SB לא נספרות.</p>';
+  return h;
+}
+
+function vBackup(){
+  var h='<div class="card"><div class="hd"><span>📥 גיבוי הנתונים</span></div><div class="pad">';
+  h+='<p class="sub" style="margin-top:0">הגיבוי כולל הכל: עובדים, היסטוריית סידורים, טיפים, בקשות וזמינויות. שימושי להעברה בין מכשירים או ליתר ביטחון.</p>';
+  h+='<button class="btn navy" onclick="A.backup()">'+(UI.restoreMsg==="copied"?"הגיבוי הועתק ✓ — הדביקו במקום בטוח":"צור גיבוי והעתק")+'</button>';
+  h+='<textarea class="bk" id="bk-out" readonly style="margin-top:8px" onclick="this.select()"></textarea></div></div>';
+  h+='<div class="card"><div class="hd"><span>📤 שחזור מגיבוי</span></div><div class="pad">';
+  h+='<p class="sub" style="margin-top:0">הדביקו גיבוי שנשמר בעבר. השחזור יחליף את כל הנתונים הנוכחיים.</p>';
+  h+='<textarea class="bk" id="bk-in" placeholder="הדביקו כאן את טקסט הגיבוי…"></textarea>';
+  h+='<button class="btn line" style="margin-top:8px" onclick="A.restore()">שחזר נתונים</button>';
+  if(UI.restoreMsg==="done") h+='<p class="sub" style="color:var(--ok);margin:8px 0 0">✓ הנתונים שוחזרו בהצלחה!</p>';
+  if(UI.restoreMsg==="bad") h+='<p class="sub" style="color:var(--warn);margin:8px 0 0">הטקסט שהודבק אינו גיבוי תקין. ודאו שהעתקתם את כולו.</p>';
+  h+='</div></div>';
+  h+='<div class="notice" style="background:#fff;border:1px solid var(--line);color:var(--dim)">💡 <b>טיפ:</b> שמרו את הקובץ הזה באפליקציית "קבצים" ופתחו מספארי, או הוסיפו למסך הבית (שיתוף ← הוסף למסך הבית). הנתונים נשמרים במכשיר באופן אוטומטי וקבוע.</div>';
+  return h;
+}
+
+function mShare(){
+  var wd=weekDates();
+  var h='<div class="shareWrap" onclick="A.share(false)"><div onclick="event.stopPropagation()" style="margin:auto 0">';
+  h+='<div class="shareCard"><h2>סידור עבודה שבועי</h2>';
+  h+='<table class="share"><tr><th style="width:27%">יום</th><th>מלצרים ושעות</th><th style="width:26%">כוננות/הערות</th></tr>';
+  wd.forEach(function(d,i){
+    var as=assignsOf(fmt(d));
+    var workers=as.filter(function(a){return a.tag!=="sb";});
+    var sbs=as.filter(function(a){return a.tag==="sb";});
+    h+='<tr><td class="day">יום '+DAYS[i]+'<small>'+heDate(d)+'</small></td><td class="names">';
+    if(!workers.length) h+='<span class="dash">—</span>';
+    workers.forEach(function(a){
+      var t=a.arrival||(a.tag==="close"?"21:00":"19:00");
+      h+='<div class="shName">'+esc(a.emp.name)+' <i>'+t+'</i></div>';
+    });
+    h+='</td><td>';
+    if(!sbs.length) h+='<span class="dash">—</span>';
+    sbs.forEach(function(a){ h+='<div class="shSB">'+esc(a.emp.name)+' <i>SB</i></div>'; });
+    h+='</td></tr>';
+  });
+  h+='</table></div>';
+  h+='<div class="shareBtns"><button class="btn line" onclick="A.copyText()">'+(UI.copied?"הועתק ✓":"העתקה כטקסט")+'</button><button class="btn ok" onclick="A.share(false)">סגירה</button></div>';
+  h+='<p class="hint">📸 צלמו צילום מסך ושלחו בקבוצה</p>';
+  h+='</div></div>';
+  return h;
+}
+
+/* ================= הפעלה ================= */
+load();
+render();
+</script>
+</body>
+</html>
